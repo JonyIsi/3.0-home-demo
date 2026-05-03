@@ -116,7 +116,6 @@ struct ContentView: View {
                     UnicornShaderView(sceneFileName: unicornSceneFileName)
                         .frame(width: shaderWidth, height: unicornShaderHeight)
                         .clipped()
-                        .ignoresSafeArea(edges: .top)
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("3.0 Home Demo")
@@ -134,6 +133,7 @@ struct ContentView: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
             .background(Color(red: 250.0 / 255.0, green: 247.0 / 255.0, blue: 241.0 / 255.0))
         }
+        .ignoresSafeArea(.container, edges: .top)
     }
 }
 
