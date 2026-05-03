@@ -11,23 +11,6 @@ import WebKit
 private let unicornSceneFileName = "unicorn-scene.json.txt"
 private let unicornShaderHeight = 680.0
 private let unicornBackgroundColor = "#FAF7F1"
-private let topGradientHeight = 176.0
-private let topGradientColor = "#000000"
-
-private extension Color {
-    init(hex: String, opacity: Double = 1) {
-        let hexValue = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var rgbValue: UInt64 = 0
-        Scanner(string: hexValue).scanHexInt64(&rgbValue)
-
-        self.init(
-            red: Double((rgbValue >> 16) & 0xFF) / 255.0,
-            green: Double((rgbValue >> 8) & 0xFF) / 255.0,
-            blue: Double(rgbValue & 0xFF) / 255.0,
-            opacity: opacity
-        )
-    }
-}
 
 struct UnicornShaderView: UIViewRepresentable {
     let sceneFileName: String
@@ -125,10 +108,11 @@ struct UnicornShaderView: UIViewRepresentable {
 
 struct ContentView: View {
     var body: some View {
-        GeometryReader { geometry in
-            let shaderWidth = geometry.size.width
+        NavigationStack {
+            GeometryReader { geometry in
+                let shaderWidth = geometry.size.width
+                let pageBackground = Color(red: 250.0 / 255.0, green: 247.0 / 255.0, blue: 241.0 / 255.0)
 
-            ZStack(alignment: .top) {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(spacing: 0) {
                         UnicornShaderView(sceneFileName: unicornSceneFileName)
@@ -148,22 +132,13 @@ struct ContentView: View {
                     }
                     .frame(width: geometry.size.width, alignment: .top)
                 }
-                .frame(width: geometry.size.width, height: geometry.size.height)
-                .background(Color(red: 250.0 / 255.0, green: 247.0 / 255.0, blue: 241.0 / 255.0))
-
-                LinearGradient(
-                    colors: [
-                        Color(hex: topGradientColor),
-                        Color(hex: topGradientColor, opacity: 0)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(width: geometry.size.width, height: topGradientHeight)
-                .allowsHitTesting(false)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(pageBackground)
+                .ignoresSafeArea(.container, edges: .top)
+                .background(pageBackground.ignoresSafeArea())
             }
+            .navigationTitle("Home")
         }
-        .ignoresSafeArea(.container, edges: .top)
     }
 }
 
