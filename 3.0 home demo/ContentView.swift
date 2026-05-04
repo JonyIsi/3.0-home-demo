@@ -12,6 +12,28 @@ private let unicornSceneFileName = "unicorn-scene.json.txt"
 private let unicornShaderHeight = 680.0
 private let unicornBackgroundColor = "#FAF7F1"
 
+private enum AppTab: Hashable {
+    case home
+    case device
+    case community
+    case me
+}
+
+private extension Color {
+    init(hex: String, opacity: Double = 1) {
+        let hexValue = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var rgbValue: UInt64 = 0
+        Scanner(string: hexValue).scanHexInt64(&rgbValue)
+
+        self.init(
+            red: Double((rgbValue >> 16) & 0xFF) / 255.0,
+            green: Double((rgbValue >> 8) & 0xFF) / 255.0,
+            blue: Double(rgbValue & 0xFF) / 255.0,
+            opacity: opacity
+        )
+    }
+}
+
 struct UnicornShaderView: UIViewRepresentable {
     let sceneFileName: String
 
@@ -107,38 +129,94 @@ struct UnicornShaderView: UIViewRepresentable {
 }
 
 struct ContentView: View {
+    @State private var selectedTab: AppTab = .home
+
     var body: some View {
-        NavigationStack {
-            GeometryReader { geometry in
-                let shaderWidth = geometry.size.width
-                let pageBackground = Color(red: 250.0 / 255.0, green: 247.0 / 255.0, blue: 241.0 / 255.0)
-
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(spacing: 0) {
-                        UnicornShaderView(sceneFileName: unicornSceneFileName)
-                            .frame(width: shaderWidth, height: unicornShaderHeight)
-                            .clipped()
-
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("3.0 Home Demo")
-                                .font(.largeTitle.bold())
-
-                            Text("Unicorn Studio WebGL shader is embedded at the top of this SwiftUI page.")
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 360, alignment: .topLeading)
-                        .padding(24)
-                    }
-                    .frame(width: geometry.size.width, alignment: .top)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(pageBackground)
-                .ignoresSafeArea(.container, edges: .top)
-                .background(pageBackground.ignoresSafeArea())
+        TabView(selection: $selectedTab) {
+            NavigationStack {
+                HomeView()
+                    .navigationTitle("Clara")
             }
-            .navigationTitle("Home")
+            .tabItem {
+                Image("TabHome")
+                    .renderingMode(.template)
+                Text("Home")
+            }
+            .tag(AppTab.home)
+
+            NavigationStack {
+                PlaceholderTabView()
+                    .navigationTitle("Device")
+            }
+            .tabItem {
+                Image("TabDevice")
+                    .renderingMode(.template)
+                Text("Device")
+            }
+            .tag(AppTab.device)
+
+            NavigationStack {
+                PlaceholderTabView()
+                    .navigationTitle("Community")
+            }
+            .tabItem {
+                Image("TabCommunity")
+                    .renderingMode(.template)
+                Text("Community")
+            }
+            .tag(AppTab.community)
+
+            NavigationStack {
+                PlaceholderTabView()
+                    .navigationTitle("Me")
+            }
+            .tabItem {
+                Image("TabMe")
+                    .renderingMode(.template)
+                Text("Me")
+            }
+            .tag(AppTab.me)
         }
+    }
+}
+
+private struct HomeView: View {
+    var body: some View {
+        GeometryReader { geometry in
+            let shaderWidth = geometry.size.width
+            let pageBackground = Color(red: 250.0 / 255.0, green: 247.0 / 255.0, blue: 241.0 / 255.0)
+
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(spacing: 0) {
+                    UnicornShaderView(sceneFileName: unicornSceneFileName)
+                        .frame(width: shaderWidth, height: unicornShaderHeight)
+                        .clipped()
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("3.0 Home Demo")
+                            .font(.largeTitle.bold())
+
+                        Text("Unicorn Studio WebGL shader is embedded at the top of this SwiftUI page.")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 360, alignment: .topLeading)
+                    .padding(24)
+                }
+                .frame(width: geometry.size.width, alignment: .top)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(pageBackground)
+            .ignoresSafeArea(.container, edges: .top)
+            .background(pageBackground.ignoresSafeArea())
+        }
+    }
+}
+
+private struct PlaceholderTabView: View {
+    var body: some View {
+        Color(red: 250.0 / 255.0, green: 247.0 / 255.0, blue: 241.0 / 255.0)
+            .ignoresSafeArea()
     }
 }
 
