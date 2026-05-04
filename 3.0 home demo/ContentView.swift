@@ -121,7 +121,6 @@ struct ContentView: View {
             Tab(value: AppTab.home) {
                 NavigationStack {
                     HomeView()
-                        .navigationTitle("Clara")
                 }
             } label: {
                 tabLabel("Home", image: "TabHome", tab: .home)
@@ -195,6 +194,61 @@ private struct HomeView: View {
             .background(pageBackground)
             .ignoresSafeArea(.container, edges: .top)
             .background(pageBackground.ignoresSafeArea())
+        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: {}) {
+                    Image("IconCalander")
+                        .renderingMode(.original)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .frame(width: 24, height: 24, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Calendar")
+            }
+
+            ToolbarItem(placement: .principal) {
+                Button(action: {}) {
+                    HStack(spacing: 8) {
+                        Image("NavAvatar")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 28, height: 28)
+                            .clipShape(Circle())
+
+                        HStack(spacing: 3) {
+                            Text("Clare and Bonnie")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(Color(hex: "#1B1821"))
+
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(Color(hex: "#1B1821"))
+                                .frame(width: 14, height: 14)
+                        }
+                    }
+                    .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clare and Bonnie")
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {}) {
+                    Image("IconBell")
+                        .renderingMode(.original)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .frame(width: 24, height: 24, alignment: .trailing)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Notifications")
+            }
         }
     }
 }
