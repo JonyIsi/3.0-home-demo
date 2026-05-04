@@ -191,65 +191,71 @@ private struct HomeView: View {
                 .frame(width: geometry.size.width, alignment: .top)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .scrollEdgeEffectStyle(.soft, for: .top)
             .background(appPageBackground)
             .ignoresSafeArea(.container, edges: .top)
             .background(appPageBackground.ignoresSafeArea())
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    HomeTopNavigationBar()
+                        .frame(width: geometry.size.width)
+                }
+            }
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button(action: {}) {
-                    Image("IconCalander")
-                        .renderingMode(.original)
+    }
+}
+
+private struct HomeTopNavigationBar: View {
+    var body: some View {
+        ZStack {
+            Button(action: {}) {
+                HStack(spacing: 8) {
+                    Image("NavAvatar")
                         .resizable()
-                        .scaledToFit()
-                        .frame(width: 24, height: 24)
-                        .frame(width: 24, height: 24, alignment: .leading)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Calendar")
-            }
+                        .scaledToFill()
+                        .frame(width: 28, height: 28)
+                        .clipShape(Circle())
 
-            ToolbarItem(placement: .principal) {
-                Button(action: {}) {
-                    HStack(spacing: 8) {
-                        Image("NavAvatar")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 28, height: 28)
-                            .clipShape(Circle())
+                    HStack(spacing: 3) {
+                        Text("Clare and Bonnie")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(Color(hex: "#1B1821"))
 
-                        HStack(spacing: 3) {
-                            Text("Clare and Bonnie")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(Color(hex: "#1B1821"))
-
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(Color(hex: "#1B1821"))
-                                .frame(width: 14, height: 14)
-                        }
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Color(hex: "#1B1821"))
+                            .frame(width: 14, height: 14)
                     }
-                    .frame(minHeight: 44)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Clare and Bonnie")
+                .frame(minHeight: 44)
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Clare and Bonnie")
 
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: {}) {
-                    Image("IconBell")
-                        .renderingMode(.original)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 24, height: 24)
-                        .frame(width: 24, height: 24, alignment: .trailing)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Notifications")
+            HStack {
+                Image("IconCalander")
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 24)
+                    .frame(width: 24, height: 24, alignment: .leading)
+                    .accessibilityLabel("Calendar")
+
+                Spacer()
+
+                Image("IconBell")
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 24)
+                    .frame(width: 24, height: 24, alignment: .trailing)
+                    .accessibilityLabel("Notifications")
             }
         }
+        .frame(height: 44)
+        .padding(.horizontal, 16)
     }
 }
 
