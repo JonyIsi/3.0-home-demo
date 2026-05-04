@@ -118,36 +118,51 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Home", image: "TabHome", value: AppTab.home) {
+            Tab(value: AppTab.home) {
                 NavigationStack {
                     HomeView()
                         .navigationTitle("Clara")
                 }
+            } label: {
+                tabLabel("Home", image: "TabHome", tab: .home)
             }
 
-            Tab("Device", image: "TabDevice", value: AppTab.device) {
+            Tab(value: AppTab.device) {
                 NavigationStack {
                     PlaceholderTabView()
                         .navigationTitle("Device")
                 }
+            } label: {
+                tabLabel("Device", image: "TabDevice", tab: .device)
             }
 
-            Tab("Community", image: "TabCommunity", value: AppTab.community) {
+            Tab(value: AppTab.community) {
                 NavigationStack {
                     PlaceholderTabView()
                         .navigationTitle("Community")
                 }
+            } label: {
+                tabLabel("Community", image: "TabCommunity", tab: .community)
             }
 
-            Tab("Me", image: "TabMe", value: AppTab.me) {
+            Tab(value: AppTab.me) {
                 NavigationStack {
                     PlaceholderTabView()
                         .navigationTitle("Me")
                 }
+            } label: {
+                tabLabel("Me", image: "TabMe", tab: .me)
             }
         }
         .tint(AppTabBarStyle.selectedColor)
-        .background(TabBarStyleAccessor())
+    }
+
+    private func tabLabel(_ title: LocalizedStringKey, image: String, tab: AppTab) -> some View {
+        Label {
+            Text(title)
+        } icon: {
+            Image(uiImage: AppTabBarStyle.icon(named: image, isSelected: selectedTab == tab))
+        }
     }
 }
 
