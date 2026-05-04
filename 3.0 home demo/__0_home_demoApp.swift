@@ -9,6 +9,10 @@ import SwiftUI
 
 @main
 struct __0_home_demoApp: App {
+    init() {
+        AppTabBarStyle.configure()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

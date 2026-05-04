@@ -19,21 +19,6 @@ private enum AppTab: Hashable {
     case me
 }
 
-private extension Color {
-    init(hex: String, opacity: Double = 1) {
-        let hexValue = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var rgbValue: UInt64 = 0
-        Scanner(string: hexValue).scanHexInt64(&rgbValue)
-
-        self.init(
-            red: Double((rgbValue >> 16) & 0xFF) / 255.0,
-            green: Double((rgbValue >> 8) & 0xFF) / 255.0,
-            blue: Double(rgbValue & 0xFF) / 255.0,
-            opacity: opacity
-        )
-    }
-}
-
 struct UnicornShaderView: UIViewRepresentable {
     let sceneFileName: String
 
@@ -133,50 +118,36 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            NavigationStack {
-                HomeView()
-                    .navigationTitle("Clara")
+            Tab("Home", image: "TabHome", value: AppTab.home) {
+                NavigationStack {
+                    HomeView()
+                        .navigationTitle("Clara")
+                }
             }
-            .tabItem {
-                Image("TabHome")
-                    .renderingMode(.template)
-                Text("Home")
-            }
-            .tag(AppTab.home)
 
-            NavigationStack {
-                PlaceholderTabView()
-                    .navigationTitle("Device")
+            Tab("Device", image: "TabDevice", value: AppTab.device) {
+                NavigationStack {
+                    PlaceholderTabView()
+                        .navigationTitle("Device")
+                }
             }
-            .tabItem {
-                Image("TabDevice")
-                    .renderingMode(.template)
-                Text("Device")
-            }
-            .tag(AppTab.device)
 
-            NavigationStack {
-                PlaceholderTabView()
-                    .navigationTitle("Community")
+            Tab("Community", image: "TabCommunity", value: AppTab.community) {
+                NavigationStack {
+                    PlaceholderTabView()
+                        .navigationTitle("Community")
+                }
             }
-            .tabItem {
-                Image("TabCommunity")
-                    .renderingMode(.template)
-                Text("Community")
-            }
-            .tag(AppTab.community)
 
-            NavigationStack {
-                PlaceholderTabView()
-                    .navigationTitle("Me")
+            Tab("Me", image: "TabMe", value: AppTab.me) {
+                NavigationStack {
+                    PlaceholderTabView()
+                        .navigationTitle("Me")
+                }
             }
-            .tabItem {
-                Image("TabMe")
-                    .renderingMode(.template)
-                Text("Me")
-            }
-            .tag(AppTab.me)
         }
+        .tint(AppTabBarStyle.selectedColor)
+        .background(TabBarStyleAccessor())
     }
 }
 
