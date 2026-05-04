@@ -11,6 +11,7 @@ import WebKit
 private let unicornSceneFileName = "unicorn-scene.json.txt"
 private let unicornShaderHeight = 680.0
 private let unicornBackgroundColor = "#FAF7F1"
+private let appPageBackground = Color(hex: "#F8F9FA")
 
 private enum AppTab: Hashable {
     case home
@@ -169,7 +170,6 @@ private struct HomeView: View {
     var body: some View {
         GeometryReader { geometry in
             let shaderWidth = geometry.size.width
-            let pageBackground = Color(red: 250.0 / 255.0, green: 247.0 / 255.0, blue: 241.0 / 255.0)
 
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 0) {
@@ -191,9 +191,9 @@ private struct HomeView: View {
                 .frame(width: geometry.size.width, alignment: .top)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(pageBackground)
+            .background(appPageBackground)
             .ignoresSafeArea(.container, edges: .top)
-            .background(pageBackground.ignoresSafeArea())
+            .background(appPageBackground.ignoresSafeArea())
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -255,7 +255,7 @@ private struct HomeView: View {
 
 private struct PlaceholderTabView: View {
     var body: some View {
-        Color(red: 250.0 / 255.0, green: 247.0 / 255.0, blue: 241.0 / 255.0)
+        appPageBackground
             .ignoresSafeArea()
     }
 }
