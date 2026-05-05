@@ -13,6 +13,7 @@ private let unicornShaderHeight = 680.0
 private let unicornShaderGradientHeight = 180.0
 private let unicornBackgroundColor = "#FAF7F1"
 private let appPageBackground = Color(hex: "#F8F9FA")
+private let homeStack2TopOffset = 136.0
 
 private enum AppTab: Hashable {
     case home
@@ -174,8 +175,13 @@ private struct HomeView: View {
 
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 0) {
-                    UnicornShaderContainer(width: shaderWidth)
-                    
+                    ZStack(alignment: .top) {
+                        UnicornShaderContainer(width: shaderWidth)
+
+                        HomeStack2View()
+                            .padding(.top, homeStack2TopOffset)
+                            .allowsHitTesting(false)
+                    }
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("3.0 Home Demo")
@@ -204,6 +210,140 @@ private struct HomeView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct HomeStack2View: View {
+    var body: some View {
+        VStack(spacing: 0) {
+            HomeStackDateView()
+
+            Image("fruit")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 160, height: 160)
+
+            VStack(spacing: 8) {
+                Text("7 Weeks, 48 Days")
+                    .font(.custom("Denton-Regular", size: 32))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+
+                VStack(spacing: 8) {
+                    Text("Bonnie is as big as a Blueberry now")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    HStack(spacing: 10) {
+                        Text("0.35 in")
+
+                        Rectangle()
+                            .frame(width: 1, height: 10)
+
+                        Text("0.003 oz")
+                    }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color(hex: "#4E4E4E"))
+                    .blendMode(.plusLighter)
+                }
+            }
+
+            HomePregnancyProgressView()
+                .padding(.top, 16)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct HomeStackDateView: View {
+    var body: some View {
+        HStack(spacing: 10) {
+            Image("IconLeftChevren")
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 20, height: 20)
+
+            Text("Jan 10 - Jan 17")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+
+            Image("IconRightChevren")
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 20, height: 20)
+        }
+        .frame(height: 20)
+    }
+}
+
+private struct HomePregnancyProgressView: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            HStack(spacing: 0) {
+                Text("Early State")
+                    .rotationEffect(.degrees(18))
+                    .offset(x: -1, y: 23)
+
+                Spacer()
+
+                Text("Mid State")
+                    .offset(y: 36)
+
+                Spacer()
+
+                Text("Late State")
+                    .rotationEffect(.degrees(-18))
+                    .offset(x: 1, y: 23)
+            }
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(Color.white.opacity(0.68))
+            .padding(.horizontal, 26)
+
+            HomeProgressSegmentShape(
+                start: CGPoint(x: 0, y: 8),
+                control: CGPoint(x: 48, y: 25),
+                end: CGPoint(x: 108, y: 34)
+            )
+                .stroke(Color.white, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+
+            HomeProgressSegmentShape(
+                start: CGPoint(x: 118, y: 35),
+                control: CGPoint(x: 172, y: 42),
+                end: CGPoint(x: 232, y: 35)
+            )
+                .stroke(Color.white.opacity(0.58), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+
+            HomeProgressSegmentShape(
+                start: CGPoint(x: 242, y: 34),
+                control: CGPoint(x: 300, y: 25),
+                end: CGPoint(x: 347, y: 8)
+            )
+                .stroke(Color.white.opacity(0.36), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+        }
+        .frame(width: 347, height: 58)
+    }
+}
+
+private struct HomeProgressSegmentShape: Shape {
+    let start: CGPoint
+    let control: CGPoint
+    let end: CGPoint
+
+    func path(in rect: CGRect) -> Path {
+        let scaleX = rect.width / 347
+        let scaleY = rect.height / 58
+
+        var path = Path()
+        path.move(to: CGPoint(x: start.x * scaleX, y: start.y * scaleY))
+        path.addQuadCurve(
+            to: CGPoint(x: end.x * scaleX, y: end.y * scaleY),
+            control: CGPoint(x: control.x * scaleX, y: control.y * scaleY)
+        )
+        return path
     }
 }
 
