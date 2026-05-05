@@ -10,6 +10,7 @@ import WebKit
 
 private let unicornSceneFileName = "unicorn-scene.json.txt"
 private let unicornShaderHeight = 680.0
+private let unicornShaderGradientHeight = 180.0
 private let unicornBackgroundColor = "#FAF7F1"
 private let appPageBackground = Color(hex: "#F8F9FA")
 
@@ -173,9 +174,7 @@ private struct HomeView: View {
 
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 0) {
-                    UnicornShaderView(sceneFileName: unicornSceneFileName)
-                        .frame(width: shaderWidth, height: unicornShaderHeight)
-                        .clipped()
+                    UnicornShaderContainer(width: shaderWidth)
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("3.0 Home Demo")
@@ -204,6 +203,38 @@ private struct HomeView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct UnicornShaderContainer: View {
+    let width: CGFloat
+
+    var body: some View {
+        UnicornShaderView(sceneFileName: unicornSceneFileName)
+            .frame(width: width, height: unicornShaderHeight)
+            .clipped()
+            .overlay(alignment: .top) {
+                LinearGradient(
+                    colors: [
+                        Color(hex: "#F8F4EE"),
+                        Color(hex: "#F8F4EE", opacity: 0)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: unicornShaderGradientHeight)
+            }
+            .overlay(alignment: .bottom) {
+                LinearGradient(
+                    colors: [
+                        Color(hex: "#F8F9FA"),
+                        Color(hex: "#F8F9FA", opacity: 0)
+                    ],
+                    startPoint: .bottom,
+                    endPoint: .top
+                )
+                .frame(height: unicornShaderGradientHeight)
+            }
     }
 }
 
