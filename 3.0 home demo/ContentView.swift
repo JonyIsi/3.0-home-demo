@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import WebKit
 
 private let unicornSceneFileName = "unicorn-scene.json.txt"
@@ -15,7 +16,10 @@ private let unicornBackgroundColor = "#FAF7F1"
 private let appPageBackground = Color(hex: "#F8F9FA")
 private let homeStack2TopOffset = 136.0
 private let progressArcVerticalOffset = -24
-
+private let progressLabelCharacterSpacing = 0.4
+private let progressViewHeight = 72.0
+private let progressDesignWidth = 347.0
+private let progressDesignHeight = 58.0
 private enum AppTab: Hashable {
     case home
     case device
@@ -288,11 +292,13 @@ private struct HomePregnancyProgressView: View {
 
             HomeProgressArcsView(verticalOffset: CGFloat(progressArcVerticalOffset))
         }
-        .frame(width: 347, height: 58)
+        .frame(width: progressDesignWidth, height: progressViewHeight)
     }
 }
 
 private struct HomeProgressCurvedLabelsView: View {
+    private static let labelUIFont = UIFont.systemFont(ofSize: 12, weight: .medium)
+
     let verticalOffset: CGFloat
 
     var body: some View {
@@ -328,7 +334,7 @@ private struct HomeProgressCurvedLabelsView: View {
                 context: &context
             )
         }
-        .frame(width: 347, height: 58)
+        .frame(width: progressDesignWidth, height: progressViewHeight)
         .offset(y: verticalOffset)
     }
 
@@ -374,7 +380,9 @@ private struct HomeProgressCurvedLabelsView: View {
     }
 
     private func characterAdvance(_ character: Character) -> CGFloat {
-        character == " " ? 6 : 6
+        let width = String(character).size(withAttributes: [.font: Self.labelUIFont]).width
+
+        return width + progressLabelCharacterSpacing
     }
 
     private func pointOnQuadraticCurve(
@@ -384,8 +392,8 @@ private struct HomeProgressCurvedLabelsView: View {
         t: CGFloat,
         in size: CGSize
     ) -> CGPoint {
-        let scaleX = size.width / 347
-        let scaleY = size.height / 58
+        let scaleX = size.width / progressDesignWidth
+        let scaleY = scaleX
         let oneMinusT = 1 - t
 
         return CGPoint(
@@ -401,8 +409,8 @@ private struct HomeProgressCurvedLabelsView: View {
         t: CGFloat,
         in size: CGSize
     ) -> CGPoint {
-        let scaleX = size.width / 347
-        let scaleY = size.height / 58
+        let scaleX = size.width / progressDesignWidth
+        let scaleY = scaleX
 
         return CGPoint(
             x: (2 * (1 - t) * (control.x - start.x) + 2 * t * (end.x - control.x)) * scaleX,
@@ -502,6 +510,7 @@ private struct HomeProgressArcsView: View {
                 .stroke(Color(hex: "#1E1E1E"), style: StrokeStyle(lineWidth: 7, lineCap: .round))
                 .blendMode(.plusLighter)
         }
+        .frame(width: progressDesignWidth, height: progressDesignHeight)
         .offset(y: verticalOffset)
     }
 }
@@ -512,8 +521,8 @@ private struct HomeProgressSegmentShape: Shape {
     let end: CGPoint
 
     func path(in rect: CGRect) -> Path {
-        let scaleX = rect.width / 347
-        let scaleY = rect.height / 58
+        let scaleX = rect.width / progressDesignWidth
+        let scaleY = rect.height / progressDesignHeight
 
         var path = Path()
         path.move(to: CGPoint(x: start.x * scaleX, y: start.y * scaleY))
