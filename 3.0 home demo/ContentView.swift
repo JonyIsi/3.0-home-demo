@@ -20,11 +20,18 @@ private let progressLabelCharacterSpacing = 0.4
 private let progressViewHeight = 72.0
 private let progressDesignWidth = 347.0
 private let progressDesignHeight = 58.0
+private let homeStackLoadingDuration = 1.0
+private let homeStackSwipeThreshold = 50.0
 private enum AppTab: Hashable {
     case home
     case device
     case community
     case me
+}
+
+private enum HomeStackDirection {
+    case previous
+    case next
 }
 
 struct UnicornShaderView: UIViewRepresentable {
@@ -185,6 +192,8 @@ struct ContentView: View {
 }
 
 private struct HomeView: View {
+    @State private var isHomeStackLoading = false
+
     var body: some View {
         GeometryReader { geometry in
             let shaderWidth = geometry.size.width
@@ -194,9 +203,12 @@ private struct HomeView: View {
                     ZStack(alignment: .top) {
                         UnicornShaderContainer(width: shaderWidth)
 
-                        HomeStack2View()
+                        HomeStack2View(
+                            isLoading: isHomeStackLoading,
+                            onPrevious: { switchHomeStack(direction: .previous) },
+                            onNext: { switchHomeStack(direction: .next) }
+                        )
                             .padding(.top, homeStack2TopOffset)
-                            .allowsHitTesting(false)
                     }
 
                     VStack(alignment: .leading, spacing: 16) {
@@ -229,83 +241,259 @@ private struct HomeView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
     }
+
+    private func switchHomeStack(direction _: HomeStackDirection) {
+        guard !isHomeStackLoading else {
+            return
+        }
+
+        withAnimation(.easeInOut(duration: 0.18)) {
+            isHomeStackLoading = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + homeStackLoadingDuration) {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                isHomeStackLoading = false
+            }
+        }
+    }
 }
 
 private struct HomeStack2View: View {
+    let isLoading: Bool
+    let onPrevious: () -> Void
+    let onNext: () -> Void
+
     var body: some View {
         VStack(spacing: 0) {
-            HomeStackDateView()
+            HomeStackDateView(
+                isLoading: isLoading,
+                onPrevious: onPrevious,
+                onNext: onNext
+            )
 
             Image("fruit")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 160, height: 160)
+                .opacity(isLoading ? 0.28 : 1)
+                .animation(.easeInOut(duration: 0.24), value: isLoading)
 
             VStack(spacing: 8) {
-                Text("7 Weeks, 48 Days")
-                    .font(.custom("Denton-Regular", size: 32))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-
-                VStack(spacing: 8) {
-                    Text("Bonnie is as big as a Blueberry now")
-                        .font(.system(size: 16, weight: .medium))
+                if isLoading {
+                    HomeSkeletonBar(width: 220, height: 32, cornerRadius: 8)
+                } else {
+                    Text("7 Weeks, 48 Days")
+                        .font(.custom("Denton-Regular", size: 32))
                         .foregroundStyle(.white)
                         .lineLimit(1)
+                }
 
-                    HStack(spacing: 10) {
-                        Text("0.35 in")
-
-                        Rectangle()
-                            .frame(width: 1, height: 10)
-
-                        Text("0.003 oz")
+                VStack(spacing: 8) {
+                    if isLoading {
+                        HomeSkeletonBar(width: 260, height: 16, cornerRadius: 6)
+                    } else {
+                        Text("Bonnie is as big as a Blueberry now")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
                     }
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color(hex: "#4E4E4E"))
-                    .blendMode(.plusLighter)
+
+                    if isLoading {
+                        HomeSkeletonBar(width: 116, height: 12, cornerRadius: 5)
+                    } else {
+                        HStack(spacing: 10) {
+                            Text("0.35 in")
+
+                            Rectangle()
+                                .frame(width: 1, height: 10)
+
+                            Text("0.003 oz")
+                        }
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Color(hex: "#4E4E4E"))
+                        .blendMode(.plusLighter)
+                    }
                 }
             }
 
-            HomePregnancyProgressView()
+            HomePregnancyProgressView(isLoading: isLoading)
                 .padding(.top, 16)
         }
         .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 18)
+                .onEnded { value in
+                    handleSwipe(value.translation)
+                }
+        )
+    }
+
+    private func handleSwipe(_ translation: CGSize) {
+        guard !isLoading else {
+            return
+        }
+
+        let isHorizontalSwipe = abs(translation.width) > abs(translation.height) * 1.2
+        guard isHorizontalSwipe, abs(translation.width) > homeStackSwipeThreshold else {
+            return
+        }
+
+        if translation.width > 0 {
+            onPrevious()
+        } else {
+            onNext()
+        }
     }
 }
 
 private struct HomeStackDateView: View {
+    let isLoading: Bool
+    let onPrevious: () -> Void
+    let onNext: () -> Void
+
     var body: some View {
         HStack(spacing: 10) {
-            Image("IconLeftChevren")
-                .renderingMode(.original)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20, height: 20)
+            Button(action: onPrevious) {
+                Image("IconLeftChevren")
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+            }
+            .buttonStyle(.plain)
+            .disabled(isLoading)
+            .accessibilityLabel("Previous date range")
 
-            Text("Jan 10 - Jan 17")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.white)
-                .lineLimit(1)
+            if isLoading {
+                HomeSkeletonBar(width: 116, height: 16, cornerRadius: 6)
+            } else {
+                Text("Jan 10 - Jan 17")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+            }
 
-            Image("IconRightChevren")
-                .renderingMode(.original)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20, height: 20)
+            Button(action: onNext) {
+                Image("IconRightChevren")
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+            }
+            .buttonStyle(.plain)
+            .disabled(isLoading)
+            .accessibilityLabel("Next date range")
         }
         .frame(height: 20)
     }
 }
 
 private struct HomePregnancyProgressView: View {
+    let isLoading: Bool
+
     var body: some View {
         ZStack(alignment: .top) {
-            HomeProgressCurvedLabelsView(verticalOffset: CGFloat(progressArcVerticalOffset))
+            if isLoading {
+                HomeProgressSkeletonView(verticalOffset: CGFloat(progressArcVerticalOffset))
+            } else {
+                HomeProgressCurvedLabelsView(verticalOffset: CGFloat(progressArcVerticalOffset))
 
-            HomeProgressArcsView(verticalOffset: CGFloat(progressArcVerticalOffset))
+                HomeProgressArcsView(verticalOffset: CGFloat(progressArcVerticalOffset))
+            }
         }
         .frame(width: progressDesignWidth, height: progressViewHeight)
+    }
+}
+
+private struct HomeProgressSkeletonView: View {
+    let verticalOffset: CGFloat
+
+    var body: some View {
+        HomeProgressSkeletonArcs()
+        .frame(width: progressDesignWidth, height: progressViewHeight)
+        .offset(y: verticalOffset)
+    }
+}
+
+private struct HomeProgressSkeletonArcs: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            HomeProgressSegmentShape(
+                start: CGPoint(x: 0, y: 8),
+                control: CGPoint(x: 48, y: 25),
+                end: CGPoint(x: 108, y: 34)
+            )
+                .stroke(Color.white.opacity(0.22), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+
+            HomeProgressSegmentShape(
+                start: CGPoint(x: 118, y: 35),
+                control: CGPoint(x: 172, y: 42),
+                end: CGPoint(x: 232, y: 35)
+            )
+                .stroke(Color.white.opacity(0.18), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+
+            HomeProgressSegmentShape(
+                start: CGPoint(x: 242, y: 34),
+                control: CGPoint(x: 300, y: 25),
+                end: CGPoint(x: 347, y: 8)
+            )
+                .stroke(Color.white.opacity(0.16), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+        }
+        .frame(width: progressDesignWidth, height: progressDesignHeight)
+        .homeSkeletonShimmer()
+    }
+}
+
+private struct HomeSkeletonBar: View {
+    let width: CGFloat
+    let height: CGFloat
+    let cornerRadius: CGFloat
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(Color.white.opacity(0.2))
+            .frame(width: width, height: height)
+            .homeSkeletonShimmer()
+    }
+}
+
+private struct HomeSkeletonShimmerModifier: ViewModifier {
+    @State private var isAnimating = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                GeometryReader { geometry in
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0),
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: geometry.size.width * 0.7)
+                    .offset(x: isAnimating ? geometry.size.width * 1.25 : -geometry.size.width * 0.8)
+                }
+                .blendMode(.plusLighter)
+            }
+            .mask(content)
+            .onAppear {
+                isAnimating = false
+
+                withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
+                    isAnimating = true
+                }
+            }
+    }
+}
+
+private extension View {
+    func homeSkeletonShimmer() -> some View {
+        modifier(HomeSkeletonShimmerModifier())
     }
 }
 
