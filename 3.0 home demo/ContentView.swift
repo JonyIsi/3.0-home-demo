@@ -5,6 +5,11 @@
 //  Created by 陈智健 on 2026/5/3.
 //
 
+// BlurUIKit 是通过 Swift Package Manager 引入的第三方库：
+// Xcode project 里添加了 https://github.com/TimOliver/BlurUIKit.git，
+// 当前页面用它来做系统 Material 难以实现的“顶部强、向下渐隐”的可变模糊。
+import BlurUIKit // 提供 VariableBlur 所需的参数类型，比如 .down、.relative、.constant。
+import BlurSwiftUI // 提供 SwiftUI 版本的 VariableBlur 视图，可以直接写在 SwiftUI body 里。
 import SwiftUI
 import UIKit
 import WebKit
@@ -14,6 +19,7 @@ private let unicornShaderHeight = 680.0
 private let unicornShaderGradientHeight = 180.0
 private let unicornBackgroundColor = "#FAF7F1"
 private let appPageBackground = Color(hex: "#F8F9FA")
+private let headerBackground = Color(hex: "#FAF7F1")
 private let homeStack2TopOffset = 136.0
 private let progressArcVerticalOffset = -24
 private let progressLabelCharacterSpacing = 0.4
@@ -22,6 +28,7 @@ private let progressDesignWidth = 347.0
 private let progressDesignHeight = 58.0
 private let homeStackLoadingDuration = 1.0
 private let homeStackSwipeThreshold = 50.0
+private let homeToolbarProgressiveBlurHeight = 24
 private enum AppTab: Hashable {
     case home
     case device
@@ -225,18 +232,27 @@ private struct HomeView: View {
                 .frame(width: geometry.size.width, alignment: .top)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .scrollEdgeEffectStyle(.soft, for: .top)
             .background(appPageBackground)
             .ignoresSafeArea(.container, edges: .top)
             .background(appPageBackground.ignoresSafeArea())
-            // 顶部导航：用系统 toolbar 做容器，保留滚动时的模糊/变暗效果；
-            // toolbar 内只放一个自定义 SwiftUI 顶栏，方便按设计稿控制排版。
+            .overlay(alignment: .top) {
+                HomeToolbarBlurBackground()
+                    // 实际模糊层高度 = 顶部安全区高度 + 自定义延伸高度。
+                    // 安全区负责覆盖状态栏/刘海区域；homeToolbarProgressiveBlurHeight 负责控制往内容区延伸多远。
+                    .frame(height: geometry.safeAreaInsets.top + CGFloat(homeToolbarProgressiveBlurHeight))
+                    .ignoresSafeArea(.container, edges: .top)
+                    .allowsHitTesting(false)
+            }
+            // 顶部导航：系统 toolbar 只负责承载内容和处理安全区位置；
+            // 背后的滚动模糊改为自定义浅色 blur，避免系统 Scroll Edge 自动变深。
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     HomeTopNavigationBar()
                         .frame(width: geometry.size.width)
                 }
             }
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -766,6 +782,45 @@ private struct UnicornShaderContainer: View {
                 )
                 .frame(height: unicornShaderGradientHeight)
             }
+    }
+}
+
+private struct HomeToolbarBlurBackground: View {
+    var body: some View {
+        ZStack {
+            // 这一层是真正的“可变模糊”：BlurUIKit 会读取下方实时画面，
+            // 按 direction 和渐变参数让模糊半径从一端逐渐变化到另一端。
+            // 这里不用系统 topEdgeEffect，因为系统只给 automatic / soft / hard 三种预设，
+            // 不能细调模糊半径、渐变起点、遮罩透明度。
+            VariableBlur(direction: .down)
+                // 最大模糊半径。数值越大，顶部最糊的地方越强。
+                .maximumBlurRadius(8)
+                // 模糊渐变起点。0.18 表示从高度的 18% 附近开始明显过渡。
+                .blurStartingInset(.relative(fraction: 0.18))
+                // BlurUIKit 自带的浅色遮罩颜色，用页面背景色避免顶部发黑。
+                .dimmingTintColor(appPageBackground)
+                // 自带浅色遮罩透明度。数值越大越白，越小越透明。
+                .dimmingAlpha(.constant(alpha: 0.28))
+                // 浅色遮罩的渐变起点，和 blurStartingInset 分开调。
+                .dimmingStartingInset(.relative(fraction: 0.08))
+                // 允许遮罩渐变稍微延伸到视图范围之外，减少底部硬边。
+                .dimmingOvershoot(.relative(fraction: 1))
+                // 这层只是视觉效果，不应该挡住下面的滚动和按钮点击。
+                .passesTouchesThrough(true)
+
+            // VariableBlur 会实时采样下面的内容；下面是紫色 shader 时，blur 会被染成紫灰色。
+            // 这层固定浅色渐变负责把顶部遮罩稳定在页面默认浅色，不随滚动内容变暗。
+            LinearGradient(
+                stops: [
+                    .init(color: headerBackground.opacity(1), location: 0),
+                    .init(color: headerBackground.opacity(0.8), location: 0.36),
+                    .init(color: headerBackground.opacity(0.24), location: 0.68),
+                    .init(color: headerBackground.opacity(0), location: 1)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
     }
 }
 
