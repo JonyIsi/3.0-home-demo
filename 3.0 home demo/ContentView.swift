@@ -14,6 +14,7 @@ private let unicornShaderGradientHeight = 180.0
 private let unicornBackgroundColor = "#FAF7F1"
 private let appPageBackground = Color(hex: "#F8F9FA")
 private let homeStack2TopOffset = 136.0
+private let progressArcVerticalOffset = -24
 
 private enum AppTab: Hashable {
     case home
@@ -283,26 +284,201 @@ private struct HomeStackDateView: View {
 private struct HomePregnancyProgressView: View {
     var body: some View {
         ZStack(alignment: .top) {
-            HStack(spacing: 0) {
-                Text("Early State")
-                    .rotationEffect(.degrees(18))
-                    .offset(x: -1, y: 23)
+            HomeProgressCurvedLabelsView(verticalOffset: CGFloat(progressArcVerticalOffset))
 
-                Spacer()
+            HomeProgressArcsView(verticalOffset: CGFloat(progressArcVerticalOffset))
+        }
+        .frame(width: 347, height: 58)
+    }
+}
 
-                Text("Mid State")
-                    .offset(y: 36)
+private struct HomeProgressCurvedLabelsView: View {
+    let verticalOffset: CGFloat
 
-                Spacer()
+    var body: some View {
+        Canvas { context, size in
+            drawLabel(
+                "Early State",
+                centerT: 0.5,
+                normalOffset: 16,
+                start: CGPoint(x: 0, y: 8),
+                control: CGPoint(x: 48, y: 25),
+                end: CGPoint(x: 108, y: 34),
+                in: size,
+                context: &context
+            )
+            drawLabel(
+                "Mid State",
+                centerT: 0.50,
+                normalOffset: 16,
+                start: CGPoint(x: 118, y: 35),
+                control: CGPoint(x: 172, y: 42),
+                end: CGPoint(x: 232, y: 35),
+                in: size,
+                context: &context
+            )
+            drawLabel(
+                "Late State",
+                centerT: 0.5,
+                normalOffset: 16,
+                start: CGPoint(x: 242, y: 34),
+                control: CGPoint(x: 300, y: 25),
+                end: CGPoint(x: 347, y: 8),
+                in: size,
+                context: &context
+            )
+        }
+        .frame(width: 347, height: 58)
+        .offset(y: verticalOffset)
+    }
 
-                Text("Late State")
-                    .rotationEffect(.degrees(-18))
-                    .offset(x: 1, y: 23)
+    private func drawLabel(
+        _ label: String,
+        centerT: CGFloat,
+        normalOffset: CGFloat,
+        start: CGPoint,
+        control: CGPoint,
+        end: CGPoint,
+        in size: CGSize,
+        context: inout GraphicsContext
+    ) {
+        let characters = Array(label)
+        let advances = characters.map(characterAdvance)
+        let totalAdvance = advances.reduce(0, +)
+        let curveLength = approximateCurveLength(start: start, control: control, end: end, in: size)
+        var currentAdvance: CGFloat = 0
+
+        for index in characters.indices {
+            let character = characters[index]
+            let advance = advances[index]
+            let centeredAdvance = currentAdvance + advance / 2 - totalAdvance / 2
+            let targetLength = min(max(curveLength * centerT + centeredAdvance, 0), curveLength)
+            let t = tForLength(targetLength, start: start, control: control, end: end, in: size)
+            let curvePosition = pointOnQuadraticCurve(start: start, control: control, end: end, t: t, in: size)
+            let tangent = tangentOnQuadraticCurve(start: start, control: control, end: end, t: t, in: size)
+            let position = offsetPoint(curvePosition, tangent: tangent, distance: normalOffset)
+            let angle = Angle(radians: atan2(tangent.y, tangent.x))
+
+            var characterContext = context
+            characterContext.translateBy(x: position.x, y: position.y)
+            characterContext.rotate(by: angle)
+            characterContext.draw(
+                Text(String(character))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.white.opacity(0.68)),
+                at: .zero,
+                anchor: .center
+            )
+            currentAdvance += advance
+        }
+    }
+
+    private func characterAdvance(_ character: Character) -> CGFloat {
+        character == " " ? 6 : 6
+    }
+
+    private func pointOnQuadraticCurve(
+        start: CGPoint,
+        control: CGPoint,
+        end: CGPoint,
+        t: CGFloat,
+        in size: CGSize
+    ) -> CGPoint {
+        let scaleX = size.width / 347
+        let scaleY = size.height / 58
+        let oneMinusT = 1 - t
+
+        return CGPoint(
+            x: (oneMinusT * oneMinusT * start.x + 2 * oneMinusT * t * control.x + t * t * end.x) * scaleX,
+            y: (oneMinusT * oneMinusT * start.y + 2 * oneMinusT * t * control.y + t * t * end.y) * scaleY
+        )
+    }
+
+    private func tangentOnQuadraticCurve(
+        start: CGPoint,
+        control: CGPoint,
+        end: CGPoint,
+        t: CGFloat,
+        in size: CGSize
+    ) -> CGPoint {
+        let scaleX = size.width / 347
+        let scaleY = size.height / 58
+
+        return CGPoint(
+            x: (2 * (1 - t) * (control.x - start.x) + 2 * t * (end.x - control.x)) * scaleX,
+            y: (2 * (1 - t) * (control.y - start.y) + 2 * t * (end.y - control.y)) * scaleY
+        )
+    }
+
+    private func offsetPoint(_ point: CGPoint, tangent: CGPoint, distance: CGFloat) -> CGPoint {
+        let length = max(sqrt(tangent.x * tangent.x + tangent.y * tangent.y), 0.001)
+        let normal = CGPoint(x: -tangent.y / length, y: tangent.x / length)
+
+        return CGPoint(
+            x: point.x + normal.x * distance,
+            y: point.y + normal.y * distance
+        )
+    }
+
+    private func approximateCurveLength(
+        start: CGPoint,
+        control: CGPoint,
+        end: CGPoint,
+        in size: CGSize
+    ) -> CGFloat {
+        var length: CGFloat = 0
+        var previousPoint = pointOnQuadraticCurve(start: start, control: control, end: end, t: 0, in: size)
+
+        for step in 1...40 {
+            let t = CGFloat(step) / 40
+            let nextPoint = pointOnQuadraticCurve(start: start, control: control, end: end, t: t, in: size)
+            length += distance(from: previousPoint, to: nextPoint)
+            previousPoint = nextPoint
+        }
+
+        return length
+    }
+
+    private func tForLength(
+        _ targetLength: CGFloat,
+        start: CGPoint,
+        control: CGPoint,
+        end: CGPoint,
+        in size: CGSize
+    ) -> CGFloat {
+        var walkedLength: CGFloat = 0
+        var previousPoint = pointOnQuadraticCurve(start: start, control: control, end: end, t: 0, in: size)
+
+        for step in 1...80 {
+            let t = CGFloat(step) / 80
+            let nextPoint = pointOnQuadraticCurve(start: start, control: control, end: end, t: t, in: size)
+            let segmentLength = distance(from: previousPoint, to: nextPoint)
+
+            if walkedLength + segmentLength >= targetLength {
+                let segmentProgress = (targetLength - walkedLength) / max(segmentLength, 0.001)
+                return (CGFloat(step - 1) + segmentProgress) / 80
             }
-            .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(Color.white.opacity(0.68))
-            .padding(.horizontal, 26)
 
+            walkedLength += segmentLength
+            previousPoint = nextPoint
+        }
+
+        return 1
+    }
+
+    private func distance(from start: CGPoint, to end: CGPoint) -> CGFloat {
+        let x = end.x - start.x
+        let y = end.y - start.y
+
+        return sqrt(x * x + y * y)
+    }
+}
+
+private struct HomeProgressArcsView: View {
+    let verticalOffset: CGFloat
+
+    var body: some View {
+        ZStack(alignment: .top) {
             HomeProgressSegmentShape(
                 start: CGPoint(x: 0, y: 8),
                 control: CGPoint(x: 48, y: 25),
@@ -315,16 +491,18 @@ private struct HomePregnancyProgressView: View {
                 control: CGPoint(x: 172, y: 42),
                 end: CGPoint(x: 232, y: 35)
             )
-                .stroke(Color.white.opacity(0.58), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                .stroke(Color(hex: "#1E1E1E"), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                .blendMode(.plusLighter)
 
             HomeProgressSegmentShape(
                 start: CGPoint(x: 242, y: 34),
                 control: CGPoint(x: 300, y: 25),
                 end: CGPoint(x: 347, y: 8)
             )
-                .stroke(Color.white.opacity(0.36), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                .stroke(Color(hex: "#1E1E1E"), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                .blendMode(.plusLighter)
         }
-        .frame(width: 347, height: 58)
+        .offset(y: verticalOffset)
     }
 }
 
