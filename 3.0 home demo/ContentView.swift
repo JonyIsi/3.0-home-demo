@@ -254,9 +254,10 @@ private struct HomeTopNavigationBar: View {
                             .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(Color(hex: "#1B1821"))
 
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(Color(hex: "#1B1821"))
+                        Image("IconTria")
+                            .renderingMode(.original)
+                            .resizable()
+                            .scaledToFit()
                             .frame(width: 14, height: 14)
                     }
                 }
