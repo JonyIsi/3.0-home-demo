@@ -31,12 +31,16 @@ struct UnicornShaderView: UIViewRepresentable {
     let sceneFileName: String
 
     func makeUIView(context: Context) -> WKWebView {
+        // 背景动画实现思路：
+        // SwiftUI 本身不直接跑 Unicorn Studio 的 WebGL 动画，所以这里用 UIViewRepresentable
+        // 把 UIKit 的 WKWebView 包进 SwiftUI，再让 WebView 加载一段本地 HTML。
         let configuration = WKWebViewConfiguration()
         configuration.allowsInlineMediaPlayback = true
         configuration.websiteDataStore = .nonPersistent()
         configuration.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
+        // WebView 只负责显示动画，不参与页面滚动和点击，避免影响上层 SwiftUI 交互。
         webView.isOpaque = true
         webView.backgroundColor = UIColor(
             red: 250.0 / 255.0,
@@ -50,6 +54,8 @@ struct UnicornShaderView: UIViewRepresentable {
         webView.isUserInteractionEnabled = false
 
         clearWebsiteData {
+            // HTML 里引用本地的 unicorn-scene.json.txt，同时加载 UnicornStudio 的运行脚本；
+            // 页面加载完成后调用 UnicornStudio.init()，WebGL 动画就在这个 WebView 内部运行。
             webView.loadHTMLString(html, baseURL: Bundle.main.resourceURL)
         }
 
@@ -69,6 +75,8 @@ struct UnicornShaderView: UIViewRepresentable {
     private var html: String {
         let cacheBuster = UUID().uuidString
 
+        // 这段 HTML 是 WebView 里的“动画舞台”：#scene 占满 WebView，
+        // data-us-project-src 指向本地 shader 配置文件，脚本负责把配置渲染成 WebGL 动画。
         return """
         <!doctype html>
         <html>
@@ -93,6 +101,7 @@ struct UnicornShaderView: UIViewRepresentable {
               height: 100%;
             }
           </style>
+          <!-- 这里开始加载 Unicorn Studio 的官方远程 SDK，不是本地文件；本地只提供 scene 配置。 -->
           <script src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.11/dist/unicornStudio.umd.js?v=\(cacheBuster)"></script>
         </head>
         <body>
@@ -125,6 +134,8 @@ struct ContentView: View {
     @State private var selectedTab: AppTab = .home
 
     var body: some View {
+        // 底部导航：保留系统 TabView/TabBar 结构，保证页面切换和安全区处理稳定；
+        // 视觉样式再通过 tab label 和 AppTabBarStyle 单独定制。
         TabView(selection: $selectedTab) {
             Tab(value: AppTab.home) {
                 NavigationStack {
@@ -206,6 +217,8 @@ private struct HomeView: View {
             .background(appPageBackground)
             .ignoresSafeArea(.container, edges: .top)
             .background(appPageBackground.ignoresSafeArea())
+            // 顶部导航：用系统 toolbar 做容器，保留滚动时的模糊/变暗效果；
+            // toolbar 内只放一个自定义 SwiftUI 顶栏，方便按设计稿控制排版。
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     HomeTopNavigationBar()
@@ -538,6 +551,8 @@ private struct UnicornShaderContainer: View {
     let width: CGFloat
 
     var body: some View {
+        // 这个容器只负责 SwiftUI 层的摆放：固定 WebView 的尺寸，并在动画上叠加上下渐变，
+        // 让 WebGL 背景和页面内容之间过渡更自然，不改 WebView 内部动画本身。
         UnicornShaderView(sceneFileName: unicornSceneFileName)
             .frame(width: width, height: unicornShaderHeight)
             .clipped()

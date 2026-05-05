@@ -25,6 +25,7 @@ enum AppTabBarStyle {
     }
 
     static func configure() {
+        // App 仍然使用系统 TabBar；这里仅调整它的全局视觉样式。
         let appearance = UITabBarAppearance()
         appearance.configureWithDefaultBackground()
 
