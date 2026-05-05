@@ -175,6 +175,7 @@ private struct HomeView: View {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 0) {
                     UnicornShaderContainer(width: shaderWidth)
+                    
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("3.0 Home Demo")
